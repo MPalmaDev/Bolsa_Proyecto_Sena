@@ -126,6 +126,42 @@
         </div>
     </section>
 
+    @if($proyectosPatrocinados->isNotEmpty())
+    <section class="bento-grid">
+        <div style="grid-column: 1 / -1;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 24px;">
+                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #f59e0b, #d97706); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white;">
+                    <i class="fas fa-crown"></i>
+                </div>
+                <h2 style="font-size: 24px; font-weight: 900; color: var(--text);">Proyectos <span style="color: #f59e0b;">Patrocinados</span></h2>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">
+                @foreach($proyectosPatrocinados as $p)
+                <div style="background: white; border-radius: 20px; overflow: hidden; border: 2px solid rgba(245,158,11,0.2); box-shadow: 0 8px 24px rgba(245,158,11,0.1);">
+                    <div style="height: 160px; position: relative; background: #f8fafc;">
+                        <img src="{{ $p->imagen_url }}" loading="lazy" style="width:100%; height:100%; object-fit:cover;">
+                        <div style="position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #f59e0b, #d97706); color: white; padding: 4px 12px; border-radius: 20px; font-size: 10px; font-weight: 700; display: flex; align-items: center; gap: 4px;">
+                            <i class="fas fa-crown"></i> Patrocinado
+                        </div>
+                        <div style="position: absolute; bottom: 12px; left: 12px; background: rgba(0,0,0,0.6); color: white; padding: 4px 10px; border-radius: 8px; font-size: 10px; font-weight: 600;">
+                            {{ $p->categoria }}
+                        </div>
+                    </div>
+                    <div style="padding: 20px;">
+                        <div style="font-size: 12px; font-weight: 700; color: var(--text-light); margin-bottom: 6px;">{{ $p->empresa?->nombre }}</div>
+                        <h4 style="font-size: 16px; font-weight: 800; margin-bottom: 8px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">{{ $p->titulo }}</h4>
+                        <div style="display: flex; gap: 12px; font-size: 11px; color: var(--text-light); font-weight: 600;">
+                            <span><i class="fas fa-clock" style="color: #f59e0b;"></i> {{ $p->duracion_estimada_dias }} días</span>
+                            <span><i class="fas fa-building"></i> {{ $p->empresa?->nombre }}</span>
+                        </div>
+                    </div>
+                </div>
+                @endforeach
+            </div>
+        </div>
+    </section>
+    @endif
+
     <section class="cta-section">
         <div class="cta-content">
             <h2>¿Listo para transformar el futuro?</h2>

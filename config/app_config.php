@@ -57,4 +57,24 @@ return [
         'min_length' => 8,
         'max_length' => 100,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Configuración de Planes de Publicación (Monetización)
+    |--------------------------------------------------------------------------
+    */
+    'publicacion' => [
+        'destacado' => [
+            'precio' => 50000,
+            'dias' => 7,
+            'label' => 'Destacado',
+            'descripcion' => 'Aparece en los primeros lugares de su categoría por 7 días',
+        ],
+        'patrocinado' => [
+            'precio' => 150000,
+            'dias' => 7,
+            'label' => 'Patrocinado',
+            'descripcion' => 'Aparece en primeros lugares, en la página principal y notificaciones a aprendices',
+        ],
+    ],
 ];

@@ -143,6 +143,12 @@
                             <div style="position: absolute; top: 16px; left: 16px; background: linear-gradient(135deg, #3eb489, #2d9d74); color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;">
                                 {{ $p->categoria }}
                             </div>
+                            @if($p->tipo_publicacion_badge)
+                                @php $badge = $p->tipo_publicacion_badge; @endphp
+                                <div style="position:absolute;top:16px;right:16px;background:{{ $badge['bg'] }};color:white;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:flex;align-items:center;gap:6px;">
+                                    <i class="fas {{ $badge['icon'] }}"></i> {{ $badge['label'] }}
+                                </div>
+                            @endif
                         </div>
                         <div style="padding: 28px;">
                             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 14px;">

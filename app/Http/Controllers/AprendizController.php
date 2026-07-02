@@ -114,10 +114,13 @@ class AprendizController extends Controller
             $html = '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:24px;">';
             foreach ($proyectos as $p) {
                 $yaPostulado = in_array($p->id, $postulados);
+                $badge = $p->tipo_publicacion_badge;
+                $badgeHtml = $badge ? '<div style="position:absolute;top:16px;right:16px;background:'.$badge['bg'].';color:white;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,0.2);display:flex;align-items:center;gap:6px;"><i class="fas '.$badge['icon'].'"></i> '.$badge['label'].'</div>' : '';
                 $html .= '<div style="background:white;border-radius:24px;overflow:hidden;border:1px solid rgba(62,180,137,0.1);transition:all 0.3s;">
                     <div style="height:200px;position:relative;">
                         <img src="'.e($p->imagen_url).'" loading="lazy" alt="" style="width:100%;height:100%;object-fit:cover;">
                         <div style="position:absolute;top:16px;left:16px;background:linear-gradient(135deg,#3eb489,#2d9d74);color:white;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;">'.e($p->categoria).'</div>
+                        '.$badgeHtml.'
                     </div>
                     <div style="padding:28px;">
                         <div style="display:flex;align-items:center;gap:10px;margin-bottom:14px;">

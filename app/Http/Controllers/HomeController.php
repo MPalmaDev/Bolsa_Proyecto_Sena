@@ -16,11 +16,23 @@ class HomeController extends Controller
         $totalAprendices = Aprendiz::where('activo', true)->count();
         $totalInstructores = Instructor::where('activo', true)->count();
 
+        $proyectosPatrocinados = Proyecto::with('empresa')
+            ->whereIn('estado', ['aprobado', 'en_progreso'])
+            ->where('tipo_publicacion', 'patrocinado')
+            ->where(function ($q) {
+                $q->whereNull('fecha_fin_plan')
+                    ->orWhere('fecha_fin_plan', '>=', now());
+            })
+            ->orderByDesc('fecha_publicacion')
+            ->limit(6)
+            ->get();
+
         return view('index', compact(
             'totalProyectos',
             'totalEmpresas',
             'totalAprendices',
-            'totalInstructores'
+            'totalInstructores',
+            'proyectosPatrocinados'
         ));
     }
 }

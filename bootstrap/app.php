@@ -55,6 +55,13 @@ return Application::configure(basePath: dirname(__DIR__))
                  ->hourly()
                  ->withoutOverlapping()
                  ->appendOutputTo(storage_path('logs/queue-monitor.log'));
+
+        // === MONETIZACIÓN ===
+        // Revocar visibilidad de proyectos con plan expirado - cada hora
+        $schedule->command('proyectos:revisar-expiracion-visibilidad')
+                 ->hourly()
+                 ->withoutOverlapping()
+                 ->appendOutputTo(storage_path('logs/visibilidad-expiracion.log'));
     })
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [

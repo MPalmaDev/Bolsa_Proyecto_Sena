@@ -149,6 +149,12 @@ Route::middleware(['auth.custom', 'rol:3'])->prefix('empresa')->name('empresa.')
     Route::get('/proyectos/{id}/postulantes', [EmpresaController::class, 'verPostulantes'])->name('proyectos.postulantes')->middleware('ownership:proyecto,id');
     Route::get('/proyectos/{id}/participantes', [EmpresaController::class, 'verParticipantes'])->name('proyectos.participantes')->middleware('ownership:proyecto,id');
     Route::get('/proyectos/{id}/reporte', [EmpresaController::class, 'verReporte'])->name('proyectos.reporte')->middleware('ownership:proyecto,id');
+    // Rutas de monetización
+    Route::get('/proyectos/{id}/seleccionar-plan', [App\Http\Controllers\PagoController::class, 'mostrarFormularioPago'])->name('proyectos.plan')->middleware('ownership:proyecto,id');
+    Route::get('/proyectos/{id}/pago', [App\Http\Controllers\PagoController::class, 'mostrarPago'])->name('proyectos.pago')->middleware('ownership:proyecto,id');
+    Route::post('/proyectos/{id}/pago', [App\Http\Controllers\PagoController::class, 'procesarPago'])->name('proyectos.pago.procesar')->middleware('ownership:proyecto,id');
+    Route::get('/proyectos/{proyectoId}/nequi/simular/{pagoId}/{transaction_id}', [App\Http\Controllers\PagoController::class, 'mostrarSimulacionNequi'])->name('proyectos.nequi.simular')->middleware('ownership:proyecto,proyectoId');
+    Route::post('/proyectos/nequi/simular/procesar', [App\Http\Controllers\NequiWebhookController::class, 'simulateApprove'])->name('proyectos.nequi.simular.procesar');
     Route::get('/perfil', [EmpresaController::class, 'perfil'])->name('perfil');
     Route::put('/perfil', [EmpresaController::class, 'actualizarPerfil'])->name('perfil.update');
 });
@@ -234,11 +240,18 @@ Route::middleware(['auth.custom', 'rol:4'])->prefix('admin')->name('admin.')->gr
     Route::post('/backup/importar', [BackupController::class, 'importar'])->name('backup.importar');
     Route::get('/backup/descargar/{nombre}', [BackupController::class, 'descargar'])->name('backup.descargar');
     Route::delete('/backup/eliminar/{nombre}', [BackupController::class, 'eliminar'])->name('backup.eliminar');
+    // Gestión de pagos
+    Route::get('/pagos', [App\Http\Controllers\AdminController::class, 'pagos'])->name('pagos');
+    Route::post('/pagos/{id}/confirmar', [App\Http\Controllers\AdminController::class, 'confirmarPago'])->name('pagos.confirmar');
+    Route::post('/pagos/{id}/rechazar', [App\Http\Controllers\AdminController::class, 'rechazarPago'])->name('pagos.rechazar');
 });
 
 Route::middleware(['auth.custom', 'rol:4'])->get('/api/admin/stats', [StatsController::class, 'dashboard'])->name('api.admin.stats');
 Route::middleware(['auth.custom', 'rol:4'])->get('/api/admin/stats/programas', [StatsController::class, 'programas'])->name('api.admin.stats.programas');
 Route::middleware(['auth.custom', 'rol:4'])->get('/api/admin/analytics', [StatsController::class, 'analytics'])->name('api.admin.analytics');
+
+// Webhook Nequi (sin autenticación — Nequi llama este endpoint)
+Route::post('/nequi/webhook', [App\Http\Controllers\NequiWebhookController::class, 'handle'])->name('nequi.webhook');
 
 //  SEGURIDAD: Rate limiting en APIs de infinite scroll (60/min)
 Route::middleware(['auth.custom', 'throttle:60,1'])->group(function () {

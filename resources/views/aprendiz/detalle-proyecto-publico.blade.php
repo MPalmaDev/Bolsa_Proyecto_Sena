@@ -41,9 +41,15 @@
             <a href="{{ url()->previous() }}" style="display: inline-flex; align-items: center; gap: 8px; color: rgba(255,255,255,0.6); text-decoration: none; font-size: 13px; font-weight: 600; margin-bottom: 16px; transition: color 0.3s;" onmouseover="this.style.color='white'" onmouseout="this.style.color='rgba(255,255,255,0.6)'">
                 <i class="fas fa-arrow-left"></i> Volver
             </a>
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
                 <span class="instructor-tag">Oportunidad</span>
                 <span style="background: rgba(59,130,246,0.2); border: 1px solid rgba(59,130,246,0.3); color: #93c5fd; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700;">{{ $proyecto->categoria }}</span>
+                @if($proyecto->tipo_publicacion_badge)
+                    @php $b = $proyecto->tipo_publicacion_badge; @endphp
+                    <span style="background: {{ $b['bg'] }}; color: white; padding: 6px 14px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.2);">
+                        <i class="fas {{ $b['icon'] }}"></i> {{ $b['label'] }}
+                    </span>
+                @endif
             </div>
             <h1 class="instructor-title">{{ $proyecto->titulo }}</h1>
             <p style="color: rgba(255,255,255,0.7); font-size: 15px; font-weight: 500;">Conoce todos los detalles y decide si este proyecto es para ti.</p>

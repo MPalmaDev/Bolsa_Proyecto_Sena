@@ -21,6 +21,9 @@
 <a href="{{ route('admin.historial') }}" class="nav-item {{ request()->routeIs('admin.historial*') ? 'active' : '' }}">
     <i class="fas fa-clipboard-list"></i> Historial
 </a>
+<a href="{{ route('admin.pagos') }}" class="nav-item {{ request()->routeIs('admin.pagos*') ? 'active' : '' }}">
+    <i class="fas fa-credit-card"></i> Pagos
+</a>
 
 <span class="nav-label" style="margin-top: 24px; display: flex; align-items: center; gap: 8px; color: var(--primary);">
     <i class="fas fa-headset" style="font-size: 10px;"></i> Soporte

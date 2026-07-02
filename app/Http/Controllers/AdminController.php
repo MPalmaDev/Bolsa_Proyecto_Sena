@@ -19,9 +19,11 @@ use App\Models\Instructor;
 use App\Models\MensajeSoporte;
 use App\Models\Postulacion;
 use App\Models\Proyecto;
+use App\Models\PagoPublicacion;
 use App\Models\User;
 use Carbon\Carbon;
 use App\Notifications\AppNotification;
+use App\Http\Controllers\PagoController;
 use App\Jobs\SendEmailJob;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -603,6 +605,71 @@ class AdminController extends Controller
         }
 
         return back()->with('success', 'Respuesta enviada.');
+    }
+
+    public function pagos(Request $request): View
+    {
+        $query = PagoPublicacion::with(['proyecto', 'empresa', 'confirmador'])
+            ->orderByDesc('created_at');
+
+        if ($request->filled('estado')) {
+            $query->where('estado', $request->estado);
+        }
+        if ($request->filled('tipo')) {
+            $query->where('tipo', $request->tipo);
+        }
+
+        $pagos = $query->paginate(20);
+
+        $resumen = [
+            'total' => PagoPublicacion::count(),
+            'pendientes' => PagoPublicacion::where('estado', 'pendiente')->count(),
+            'confirmados' => PagoPublicacion::where('estado', 'confirmado')->count(),
+            'rechazados' => PagoPublicacion::where('estado', 'rechazado')->count(),
+            'ingresos' => PagoPublicacion::where('estado', 'confirmado')->sum('monto'),
+        ];
+
+        return view('admin.pagos', compact('pagos', 'resumen'));
+    }
+
+    public function confirmarPago(int $id): RedirectResponse
+    {
+        $pago = PagoPublicacion::with('proyecto')->findOrFail($id);
+
+        if ($pago->estado !== 'pendiente') {
+            return back()->with('error', 'Este pago ya fue procesado.');
+        }
+
+        app(PagoController::class)->activarPlan($pago->proyecto, $pago);
+
+        AuditLog::registrar(session('usr_id'), 'confirmar', 'pagos_publicacion', 'pagos', $id, null, ['nombre_objetivo' => $pago->proyecto->titulo, 'tipo' => $pago->tipo, 'monto' => $pago->monto], "Pago {$pago->tipo} confirmado para el proyecto {$pago->proyecto->titulo} por \${$pago->monto} COP.");
+
+        return back()->with('success', 'Pago confirmado. Plan de visibilidad activado.');
+    }
+
+    public function rechazarPago(int $id): RedirectResponse
+    {
+        $pago = PagoPublicacion::findOrFail($id);
+
+        if ($pago->estado !== 'pendiente') {
+            return back()->with('error', 'Este pago ya fue procesado.');
+        }
+
+        $pago->update(['estado' => 'rechazado', 'confirmado_por' => session('usr_id')]);
+
+        $empresa = $pago->empresa;
+        if ($empresa?->usuario) {
+            $empresa->usuario->notify(new AppNotification(
+                'Pago rechazado',
+                "El pago para {$pago->proyecto->titulo} fue rechazado. Contacte al administrador.",
+                'fa-credit-card',
+                route('empresa.proyectos.detalle', $pago->proyecto_id)
+            ));
+        }
+
+        AuditLog::registrar(session('usr_id'), 'rechazar', 'pagos_publicacion', 'pagos', $id, null, ['nombre_objetivo' => $pago->proyecto->titulo], "Pago rechazado para el proyecto {$pago->proyecto->titulo}.");
+
+        return back()->with('success', 'Pago rechazado.');
     }
 
     public function revisarProyecto(int $id): View

@@ -198,6 +198,55 @@
             </div>
         </div>
 
+        <!-- Plan de Visibilidad -->
+        @php $planBadge = $proyecto->tipo_publicacion_badge; @endphp
+        <div class="glass-card" style="padding: 24px;">
+            <h4 style="font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 16px;">
+                <i class="fas fa-chart-line" style="color: #f59e0b; margin-right: 8px;"></i>Plan de Visibilidad
+            </h4>
+            @if($planBadge)
+                <div style="background: {{ $planBadge['bg'] }}; border-radius: 12px; padding: 16px; text-align: center; margin-bottom: 12px;">
+                    <i class="fas {{ $planBadge['icon'] }}" style="font-size: 28px; color: white; margin-bottom: 8px; display: block;"></i>
+                    <span style="font-size: 18px; font-weight: 900; color: white;">{{ $planBadge['label'] }}</span>
+                </div>
+                <div style="display: grid; gap: 10px; font-size: 13px;">
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-light); font-weight: 600;">Inicio:</span>
+                        <span style="font-weight: 700;">{{ $proyecto->fecha_inicio_plan?->format('d/m/Y') ?? '-' }}</span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-light); font-weight: 600;">Vence:</span>
+                        <span style="font-weight: 700; color: {{ $proyecto->fecha_fin_plan && $proyecto->fecha_fin_plan->isFuture() ? '#10b981' : '#ef4444' }};">
+                            {{ $proyecto->fecha_fin_plan?->format('d/m/Y') ?? '-' }}
+                        </span>
+                    </div>
+                    <div style="display: flex; justify-content: space-between;">
+                        <span style="color: var(--text-light); font-weight: 600;">Días restantes:</span>
+                        <span style="font-weight: 700;">
+                            @if($proyecto->fecha_fin_plan)
+                                {{ max(0, now()->diffInDays($proyecto->fecha_fin_plan, false)) }} días
+                            @else
+                                -
+                            @endif
+                        </span>
+                    </div>
+                </div>
+                @if($proyecto->pago)
+                    <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid #f1f5f9; font-size: 12px; color: var(--text-light);">
+                        Pago: ${{ number_format($proyecto->pago->monto) }} COP · {{ ucfirst($proyecto->pago->metodo_pago) }}
+                    </div>
+                @endif
+            @else
+                <div style="text-align: center; padding: 8px 0;">
+                    <p style="font-size: 13px; color: var(--text-light); font-weight: 600; margin-bottom: 16px;">Sin plan de visibilidad activo</p>
+                    <a href="{{ route('empresa.proyectos.plan', $proyecto->id) }}" class="btn-premium" style="display: inline-flex; padding: 10px 20px; font-size: 13px; background: linear-gradient(135deg, #f59e0b, #d97706);">
+                        <i class="fas fa-rocket"></i> Impulsar Proyecto
+                    </a>
+                    <p style="font-size: 11px; color: var(--text-lighter); margin-top: 8px; font-weight: 500;">Destaca tu proyecto por ${{ number_format(config('app_config.publicacion.destacado.precio')) }} COP</p>
+                </div>
+            @endif
+        </div>
+
         <!-- Instructor Assigned -->
         <div class="glass-card" style="padding: 24px;">
             <h4 style="font-size: 14px; font-weight: 800; color: var(--text); margin-bottom: 16px;">

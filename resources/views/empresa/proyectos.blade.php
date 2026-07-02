@@ -114,10 +114,18 @@
                             <div class="project-id">ID: PROJ-{{ str_pad($proyecto->id, 4, '0', STR_PAD_LEFT) }}</div>
                         </div>
                     </div>
-                    <span class="status-badge" style="background: {{ $badge['bg'] }}; color: white;">
-                        <i class="fas {{ $badge['icon'] }}"></i>
-                        {{ Str::title(str_replace('_', ' ', $proyecto->estado)) }}
-                    </span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        @if($proyecto->tipo_publicacion_badge)
+                            @php $vb = $proyecto->tipo_publicacion_badge; @endphp
+                            <span style="background: {{ $vb['bg'] }}; color: white; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;">
+                                <i class="fas {{ $vb['icon'] }}"></i> {{ $vb['label'] }}
+                            </span>
+                        @endif
+                        <span class="status-badge" style="background: {{ $badge['bg'] }}; color: white;">
+                            <i class="fas {{ $badge['icon'] }}"></i>
+                            {{ Str::title(str_replace('_', ' ', $proyecto->estado)) }}
+                        </span>
+                    </div>
                 </div>
 
                 {{-- Meta --}}

@@ -39,12 +39,18 @@ class Proyecto extends Model
         'longitud',
         'oferta',
         'oferta_otro',
+        'tipo_publicacion',
+        'fecha_inicio_plan',
+        'fecha_fin_plan',
+        'pago_id',
     ];
 
     protected $casts = [
         'fecha_publicacion' => 'date',
         'deleted_at' => 'datetime',
         'calidad_aprobada' => 'boolean',
+        'fecha_inicio_plan' => 'datetime',
+        'fecha_fin_plan' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -80,6 +86,11 @@ class Proyecto extends Model
     public function evidencias(): HasMany
     {
         return $this->hasMany(Evidencia::class, 'proyecto_id', 'id');
+    }
+
+    public function pago(): BelongsTo
+    {
+        return $this->belongsTo(PagoPublicacion::class, 'pago_id', 'id');
     }
 
     // ── SCOPES ──
@@ -133,7 +144,47 @@ class Proyecto extends Model
 
     public function scopeRecientes(Builder $query): Builder
     {
-        return $query->orderByDesc('fecha_publicacion');
+        return $query->orderByRaw("FIELD(tipo_publicacion, 'patrocinado', 'destacado', 'gratuito')")
+            ->orderByDesc('fecha_publicacion');
+    }
+
+    public function scopePatrocinados(Builder $query): Builder
+    {
+        return $query->where('tipo_publicacion', 'patrocinado')
+            ->where(function ($q) {
+                $q->whereNull('fecha_fin_plan')
+                    ->orWhere('fecha_fin_plan', '>=', now());
+            });
+    }
+
+    public function scopeVisibles(Builder $query): Builder
+    {
+        return $query->whereIn('estado', ['aprobado', 'en_progreso'])
+            ->orderByRaw("FIELD(tipo_publicacion, 'patrocinado', 'destacado', 'gratuito')")
+            ->orderByDesc('fecha_publicacion');
+    }
+
+    public function esPatrocinadoActivo(): bool
+    {
+        return $this->tipo_publicacion === 'patrocinado'
+            && ($this->fecha_fin_plan === null || $this->fecha_fin_plan >= now());
+    }
+
+    public function esDestacadoActivo(): bool
+    {
+        return $this->tipo_publicacion === 'destacado'
+            && ($this->fecha_fin_plan === null || $this->fecha_fin_plan >= now());
+    }
+
+    public function getTipoPublicacionBadgeAttribute(): ?array
+    {
+        if ($this->esPatrocinadoActivo()) {
+            return ['label' => 'Patrocinado', 'icon' => 'fa-crown', 'bg' => 'linear-gradient(135deg,#f59e0b,#d97706)'];
+        }
+        if ($this->esDestacadoActivo()) {
+            return ['label' => 'Destacado', 'icon' => 'fa-star', 'bg' => 'linear-gradient(135deg,#3b82f6,#2563eb)'];
+        }
+        return null;
     }
 
 
