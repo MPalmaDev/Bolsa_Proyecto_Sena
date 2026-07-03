@@ -153,8 +153,7 @@ Route::middleware(['auth.custom', 'rol:3'])->prefix('empresa')->name('empresa.')
     Route::get('/proyectos/{id}/seleccionar-plan', [App\Http\Controllers\PagoController::class, 'mostrarFormularioPago'])->name('proyectos.plan')->middleware('ownership:proyecto,id');
     Route::get('/proyectos/{id}/pago', [App\Http\Controllers\PagoController::class, 'mostrarPago'])->name('proyectos.pago')->middleware('ownership:proyecto,id');
     Route::post('/proyectos/{id}/pago', [App\Http\Controllers\PagoController::class, 'procesarPago'])->name('proyectos.pago.procesar')->middleware('ownership:proyecto,id');
-    Route::get('/proyectos/{proyectoId}/nequi/simular/{pagoId}/{transaction_id}', [App\Http\Controllers\PagoController::class, 'mostrarSimulacionNequi'])->name('proyectos.nequi.simular')->middleware('ownership:proyecto,proyectoId');
-    Route::post('/proyectos/nequi/simular/procesar', [App\Http\Controllers\NequiWebhookController::class, 'simulateApprove'])->name('proyectos.nequi.simular.procesar');
+    Route::get('/proyectos/wompi/respuesta', [App\Http\Controllers\PagoController::class, 'respuestaWompi'])->name('proyectos.wompi.respuesta');
     Route::get('/perfil', [EmpresaController::class, 'perfil'])->name('perfil');
     Route::put('/perfil', [EmpresaController::class, 'actualizarPerfil'])->name('perfil.update');
 });
@@ -250,8 +249,8 @@ Route::middleware(['auth.custom', 'rol:4'])->get('/api/admin/stats', [StatsContr
 Route::middleware(['auth.custom', 'rol:4'])->get('/api/admin/stats/programas', [StatsController::class, 'programas'])->name('api.admin.stats.programas');
 Route::middleware(['auth.custom', 'rol:4'])->get('/api/admin/analytics', [StatsController::class, 'analytics'])->name('api.admin.analytics');
 
-// Webhook Nequi (sin autenticación — Nequi llama este endpoint)
-Route::post('/nequi/webhook', [App\Http\Controllers\NequiWebhookController::class, 'handle'])->name('nequi.webhook');
+// Webhook Wompi (sin autenticacion — Wompi llama este endpoint)
+Route::post('/wompi/webhook', [App\Http\Controllers\PagoController::class, 'webhookWompi'])->name('wompi.webhook');
 
 //  SEGURIDAD: Rate limiting en APIs de infinite scroll (60/min)
 Route::middleware(['auth.custom', 'throttle:60,1'])->group(function () {

@@ -8,25 +8,23 @@ use App\Models\Proyecto;
 use App\Models\User;
 use App\Models\Aprendiz;
 use App\Notifications\AppNotification;
-use App\Services\NequiService;
+use App\Services\WompiService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use MercadoPago\MercadoPagoConfig;
 use MercadoPago\Client\Payment\PaymentClient;
-use MercadoPago\Client\Preference\PreferenceClient;
 use MercadoPago\Exceptions\MPApiException;
 
 class PagoController extends Controller
 {
-    protected NequiService $nequi;
+    protected WompiService $wompi;
 
-    public function __construct(NequiService $nequi)
+    public function __construct(WompiService $wompi)
     {
-        $this->nequi = $nequi;
+        $this->wompi = $wompi;
         if (config('mercadopago.access_token')) {
             MercadoPagoConfig::setAccessToken(config('mercadopago.access_token'));
             MercadoPagoConfig::setRuntimeEnviroment(config('mercadopago.sandbox') ? 'sandbox' : 'production');
@@ -54,10 +52,7 @@ class PagoController extends Controller
         $precio = $precios[$tipo]['precio'] ?? 0;
         $dias = $precios[$tipo]['dias'] ?? 7;
 
-        $nequiSandbox = $this->nequi->isSandbox();
-        $nequiPhone = $this->nequi->getMerchantPhone();
-
-        return view('empresa.pago', compact('proyecto', 'tipo', 'precio', 'dias', 'nequiSandbox', 'nequiPhone'));
+        return view('empresa.pago', compact('proyecto', 'tipo', 'precio', 'dias'));
     }
 
     public function procesarPago(Request $request, int $proyectoId): RedirectResponse
@@ -67,12 +62,11 @@ class PagoController extends Controller
 
         $validated = $request->validate([
             'tipo' => 'required|in:destacado,patrocinado',
-            'metodo' => 'required|in:mercadopago,manual,nequi',
+            'metodo' => 'required|in:mercadopago,wompi,manual',
             'comprobante' => 'required_if:metodo,manual|file|mimes:jpg,jpeg,png,pdf|max:5120',
-            'mercadopago_token' => 'required_if:metodo,mercadopago|string',
-            'payment_method_id' => 'required_if:metodo,mercadopago|string',
+            'mercadopago_token' => 'nullable|string',
+            'payment_method_id' => 'nullable|string',
             'installments' => 'nullable|integer|min:1',
-            'nequi_phone' => 'required_if:metodo,nequi|string|min:7|max:20',
         ]);
 
         $proyecto = Proyecto::where('id', $proyectoId)
@@ -121,8 +115,8 @@ class PagoController extends Controller
                 return $this->procesarMercadoPago($proyecto, $pago, $validated, $usrId);
             }
 
-            if ($validated['metodo'] === 'nequi') {
-                return $this->procesarNequi($proyecto, $pago, $validated, $usrId);
+            if ($validated['metodo'] === 'wompi') {
+                return $this->procesarWompi($proyecto, $pago);
             }
 
             DB::commit();
@@ -194,59 +188,148 @@ class PagoController extends Controller
         }
     }
 
-    private function procesarNequi(Proyecto $proyecto, PagoPublicacion $pago, array $validated, int $usrId): RedirectResponse
+    private function procesarWompi(Proyecto $proyecto, PagoPublicacion $pago): RedirectResponse
     {
-        $phone = preg_replace('/[^0-9]/', '', $validated['nequi_phone']);
+        $reference = $this->wompi->generateReference();
+        $amountInCents = (int) $pago->monto * 100;
+        $signature = $this->wompi->generateIntegritySignature($reference, $amountInCents);
 
-        $result = $this->nequi->sendPaymentRequest(
-            $phone,
-            (int) $pago->monto,
-            config('nequi.push.description') . " - {$proyecto->titulo}"
-        );
-
-        if (!$result['success']) {
-            DB::rollBack();
-            return redirect()->route('empresa.proyectos.detalle', $proyecto->id)
-                ->with('error', $result['error'] ?? 'Error al conectar con Nequi');
-        }
-
-        $pago->update([
-            'nequi_phone' => $phone,
-            'nequi_transaction_id' => $result['transaction_id'],
-            'nequi_response' => $result,
-        ]);
+        $pago->update(['referencia_pago' => $reference]);
 
         DB::commit();
 
-        if ($this->nequi->isSandbox()) {
-            return redirect()->route('empresa.proyectos.nequi.simular', [
-                'proyectoId' => $proyecto->id,
-                'pagoId' => $pago->id,
-                'transaction_id' => $result['transaction_id'],
-            ])->with('success', 'Notificación push enviada a tu Nequi (sandbox).
-                Usa la app Nequi de pruebas o haz clic en "Simular pago aprobado" para continuar.');
-        }
+        $params = [
+            'public-key' => $this->wompi->getPublicKey(),
+            'currency' => 'COP',
+            'amount-in-cents' => $amountInCents,
+            'reference' => $reference,
+            'signature:integrity' => $signature,
+            'redirect-url' => config('wompi.return_url') . "?ref={$reference}",
+        ];
 
-        return redirect()->route('empresa.proyectos.detalle', $proyecto->id)
-            ->with('success', 'Revisa tu app Nequi. Te llegó una notificación push para aprobar el pago.');
+        return redirect()->to(config('wompi.checkout_url') . '?' . http_build_query($params));
     }
 
-    public function mostrarSimulacionNequi(int $proyectoId, int $pagoId, string $transactionId): View|RedirectResponse
+    public function respuestaWompi(Request $request): View|RedirectResponse
     {
-        $nit = session('nit');
-        $proyecto = Proyecto::where('id', $proyectoId)->where('empresa_nit', $nit)->firstOrFail();
-        $pago = PagoPublicacion::where('id', $pagoId)
-            ->where('proyecto_id', $proyectoId)
-            ->where('empresa_nit', $nit)
-            ->where('nequi_transaction_id', $transactionId)
-            ->firstOrFail();
+        $reference = $request->query('ref', '');
+        $transactionId = $request->query('id', '');
 
-        if ($pago->estado !== 'pendiente') {
-            return redirect()->route('empresa.proyectos.detalle', $proyecto->id)
-                ->with('info', 'Este pago ya fue procesado.');
+        if (empty($reference)) {
+            return redirect()->route('empresa.dashboard')
+                ->with('error', 'Referencia de pago no encontrada.');
         }
 
-        return view('empresa.nequi-simulacion', compact('pago', 'proyecto'));
+        $pago = PagoPublicacion::where('referencia_pago', $reference)->first();
+        if (!$pago) {
+            return redirect()->route('empresa.dashboard')
+                ->with('error', 'Pago no encontrado.');
+        }
+
+        $proyecto = Proyecto::find($pago->proyecto_id);
+
+        if (!empty($transactionId)) {
+            $txStatus = $this->wompi->getTransactionStatus($transactionId);
+
+            if ($txStatus && $txStatus['success']) {
+                $status = strtoupper($txStatus['status']);
+
+                if ($status === 'APPROVED') {
+                    DB::beginTransaction();
+                    try {
+                        $pago->update([
+                            'estado' => 'confirmado',
+                            'nequi_response' => $txStatus,
+                        ]);
+                        $this->activarPlan($proyecto, $pago);
+                        DB::commit();
+
+                        return view('empresa.wompi-respuesta', [
+                            'pago' => $pago,
+                            'proyecto' => $proyecto,
+                            'exito' => true,
+                            'mensaje' => 'Pago aprobado por Wompi. Su proyecto ahora es ' . $pago->tipo . '.',
+                        ]);
+                    } catch (\Exception $e) {
+                        DB::rollBack();
+                        Log::error('[Wompi] Error activando plan: ' . $e->getMessage());
+                    }
+                } elseif (in_array($status, ['DECLINED', 'VOIDED', 'ERROR'])) {
+                    $pago->update(['estado' => 'rechazado']);
+                    return view('empresa.wompi-respuesta', [
+                        'pago' => $pago,
+                        'proyecto' => $proyecto,
+                        'exito' => false,
+                        'mensaje' => 'El pago no fue aprobado. Puede intentar con otro metodo.',
+                    ]);
+                }
+            }
+        }
+
+        return view('empresa.wompi-respuesta', [
+            'pago' => $pago,
+            'proyecto' => $proyecto,
+            'exito' => null,
+            'mensaje' => 'Su pago esta siendo procesado. Recibira una notificacion cuando se confirme.',
+        ]);
+    }
+
+    public function webhookWompi(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $payload = $request->all();
+        $signature = $request->header('X-Wompi-Signature', '');
+
+        Log::info('[Wompi Webhook] Recibido', $payload);
+
+        if (!$this->wompi->verifyWebhookSignature($payload, $signature)) {
+            Log::warning('[Wompi Webhook] Firma invalida');
+            return response()->json(['error' => 'Invalid signature'], 401);
+        }
+
+        $transaction = $payload['data']['transaction'] ?? null;
+        if (!$transaction) {
+            return response()->json(['error' => 'No transaction data'], 422);
+        }
+
+        $reference = $transaction['reference'] ?? null;
+        $status = strtoupper($transaction['status'] ?? '');
+
+        if (!$reference || !$status) {
+            return response()->json(['error' => 'Missing reference or status'], 422);
+        }
+
+        $pago = PagoPublicacion::where('referencia_pago', $reference)->first();
+        if (!$pago) {
+            return response()->json(['error' => 'Reference not found'], 404);
+        }
+
+        DB::beginTransaction();
+        try {
+            if ($status === 'APPROVED') {
+                $pago->update([
+                    'estado' => 'confirmado',
+                    'nequi_response' => $payload,
+                ]);
+
+                $proyecto = Proyecto::find($pago->proyecto_id);
+                if ($proyecto) {
+                    $this->activarPlan($proyecto, $pago);
+                }
+            } elseif (in_array($status, ['DECLINED', 'VOIDED', 'ERROR'])) {
+                $pago->update([
+                    'estado' => 'rechazado',
+                    'nequi_response' => $payload,
+                ]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('[Wompi Webhook] Error: ' . $e->getMessage());
+            return response()->json(['error' => 'Internal error'], 500);
+        }
+
+        return response()->json(['message' => 'OK']);
     }
 
     public function activarPlan(Proyecto $proyecto, PagoPublicacion $pago): void

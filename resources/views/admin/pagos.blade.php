@@ -90,8 +90,8 @@
                         <span><i class="fas fa-calendar"></i> {{ $pago->created_at->format('d M, Y H:i') }}</span>
                         @if($pago->metodo_pago === 'mercadopago')
                             <span><i class="fas fa-bolt"></i> MercadoPago</span>
-                        @elseif($pago->metodo_pago === 'nequi')
-                            <span><i class="fas fa-mobile-alt"></i> Nequi</span>
+                        @elseif($pago->metodo_pago === 'wompi')
+                            <span><i class="fas fa-credit-card"></i> Wompi</span>
                         @else
                             <span><i class="fas fa-upload"></i> Manual</span>
                         @endif

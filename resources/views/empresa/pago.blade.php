@@ -60,8 +60,8 @@
                         <span style="color: {{ $coloresTipo[$tipo] }};"><i class="fas {{ $iconosTipo[$tipo] }}"></i> {{ ucfirst($tipo) }}</span>
                     </div>
                     <div class="resumen-item">
-                        <span style="color: var(--text-light);">Duración</span>
-                        <span>{{ $dias }} días</span>
+                        <span style="color: var(--text-light);">Duracion</span>
+                        <span>{{ $dias }} dias</span>
                     </div>
                     <div class="resumen-item" style="border-bottom: 2px dashed #e2e8f0; padding-bottom: 16px;">
                         <span style="color: var(--text-light);">Subtotal</span>
@@ -73,35 +73,34 @@
                     </div>
                 </div>
 
-                {{-- Método de pago --}}
+                {{-- Metodo de pago --}}
                 <div>
-                    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 20px;">Método de Pago</h3>
+                    <h3 style="font-size: 16px; font-weight: 800; margin-bottom: 20px;">Metodo de Pago</h3>
 
                     <form method="POST" action="{{ route('empresa.proyectos.pago.procesar', $proyecto->id) }}" enctype="multipart/form-data" id="pago-form">
                         @csrf
                         <input type="hidden" name="tipo" value="{{ $tipo }}">
+                        <input type="hidden" name="metodo" id="selected-metodo" value="wompi">
 
-                        {{-- MercadoPago --}}
-                        <div class="metodo-card selected" data-metodo="mercadopago" onclick="selectMetodo('mercadopago')" style="margin-bottom: 12px;">
+                        {{-- Wompi --}}
+                        <div class="metodo-card selected" data-metodo="wompi" onclick="selectMetodo('wompi')" style="margin-bottom: 12px;">
                             <div style="display: flex; align-items: center; gap: 16px;">
-                                <div style="width: 40px; height: 40px; background: #00b4ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: 900;">MP</div>
+                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #6c63ff, #3b3b98); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: 900;">W</div>
                                 <div style="flex: 1;">
-                                    <div style="font-size: 14px; font-weight: 800;">MercadoPago</div>
-                                    <div style="font-size: 12px; color: var(--text-light); font-weight: 500;">Tarjeta de crédito, débito, PSE o efectivo</div>
+                                    <div style="font-size: 14px; font-weight: 800;">Wompi</div>
+                                    <div style="font-size: 12px; color: var(--text-light); font-weight: 500;">Nequi, PSE, tarjetas — todo en uno</div>
                                 </div>
                                 <i class="fas fa-chevron-right" style="color: #94a3b8;"></i>
                             </div>
                         </div>
 
-                        {{-- Nequi --}}
-                        <div class="metodo-card" data-metodo="nequi" onclick="selectMetodo('nequi')" style="margin-bottom: 12px;">
+                        {{-- MercadoPago --}}
+                        <div class="metodo-card" data-metodo="mercadopago" onclick="selectMetodo('mercadopago')" style="margin-bottom: 12px;">
                             <div style="display: flex; align-items: center; gap: 16px;">
-                                <div style="width: 40px; height: 40px; background: linear-gradient(135deg, #e84393, #6c5ce7); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px;">
-                                    <i class="fas fa-mobile-alt"></i>
-                                </div>
+                                <div style="width: 40px; height: 40px; background: #00b4ff; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: white; font-size: 18px; font-weight: 900;">MP</div>
                                 <div style="flex: 1;">
-                                    <div style="font-size: 14px; font-weight: 800;">Nequi</div>
-                                    <div style="font-size: 12px; color: var(--text-light); font-weight: 500;">Paga desde tu app Nequi — notificación push</div>
+                                    <div style="font-size: 14px; font-weight: 800;">MercadoPago</div>
+                                    <div style="font-size: 12px; color: var(--text-light); font-weight: 500;">Tarjeta de credito, debito, PSE o efectivo</div>
                                 </div>
                                 <i class="fas fa-chevron-right" style="color: #94a3b8;"></i>
                             </div>
@@ -114,75 +113,73 @@
                                     <i class="fas fa-upload"></i>
                                 </div>
                                 <div style="flex: 1;">
-                                    <div style="font-size: 14px; font-weight: 800;">Transferencia o Consignación</div>
-                                    <div style="font-size: 12px; color: var(--text-light); font-weight: 500;">Sube el comprobante y el admin lo validará</div>
+                                    <div style="font-size: 14px; font-weight: 800;">Transferencia o Consignacion</div>
+                                    <div style="font-size: 12px; color: var(--text-light); font-weight: 500;">Sube el comprobante y el admin lo validara</div>
                                 </div>
                                 <i class="fas fa-chevron-right" style="color: #94a3b8;"></i>
                             </div>
                         </div>
 
-                        <input type="hidden" name="metodo" id="selected-metodo" value="mercadopago">
-
-                        {{-- Campos MercadoPago --}}
-                        <div id="mp-fields" style="display: block;">
-                            @if(config('mercadopago.public_key'))
-                            <div id="mp-checkout" style="margin-top: 20px;">
-                                <div style="padding: 20px; background: #f8fafc; border-radius: 16px; text-align: center;">
-                                    <p style="font-size: 14px; color: var(--text-light); font-weight: 600; margin-bottom: 12px;">Al hacer clic en "Pagar", serás redirigido a MercadoPago</p>
-                                    <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 16px;">
-                                        <span style="background: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0;"><i class="fab fa-cc-visa"></i> Visa</span>
-                                        <span style="background: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0;"><i class="fab fa-cc-mastercard"></i> Mastercard</span>
-                                        <span style="background: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0;"><i class="fas fa-university"></i> PSE</span>
-                                        <span style="background: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0;"><i class="fas fa-building"></i> Efecty</span>
-                                    </div>
-                                    <div id="wallet_container"></div>
-                                </div>
-                            </div>
-                            @else
-                            <div style="padding: 20px; background: #fffbeb; border-radius: 16px; margin-top: 20px;">
-                                <p style="font-size: 13px; font-weight: 600; color: #92400e;">
-                                    <i class="fas fa-info-circle"></i> Pasarela de pago no configurada. Usa el método manual.
-                                </p>
-                            </div>
-                            @endif
-                        </div>
-
-                        {{-- Campos Nequi --}}
-                        <div id="nequi-fields" style="display: none; margin-top: 20px;">
-                            <div style="border: 2px solid #f3e8ff; border-radius: 16px; padding: 32px 24px; background: linear-gradient(135deg, #faf5ff, #fff);">
+                        {{-- Campos Wompi --}}
+                        <div id="wompi-fields" style="display: block; margin-top: 20px;">
+                            <div style="border: 2px solid #e0e0ff; border-radius: 16px; padding: 32px 24px; background: linear-gradient(135deg, #f5f3ff, #fff);">
                                 <div style="text-align: center; margin-bottom: 24px;">
-                                    <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #e84393, #6c5ce7); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
-                                        <i class="fas fa-mobile-alt" style="font-size: 28px; color: white;"></i>
+                                    <div style="width: 64px; height: 64px; border-radius: 50%; background: linear-gradient(135deg, #6c63ff, #3b3b98); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;">
+                                        <span style="font-size: 28px; color: white; font-weight: 900;">W</span>
                                     </div>
-                                    <h4 style="font-size: 16px; font-weight: 800; margin-bottom: 4px;">Paga con Nequi</h4>
+                                    <h4 style="font-size: 16px; font-weight: 800; margin-bottom: 4px;">Paga con Wompi</h4>
                                     <p style="font-size: 13px; color: var(--text-light); font-weight: 500;">
-                                        Ingresa tu número Nequi y te llegará una notificación para aprobar el pago de <strong>${{ number_format($precio) }} COP</strong>
+                                        Seras redirigido a Wompi para pagar <strong>${{ number_format($precio) }} COP</strong>
                                     </p>
                                 </div>
 
-                                @if($nequiSandbox)
+                                <div style="display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+                                    <span style="background: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-mobile-alt" style="color: #e84393;"></i> Nequi
+                                    </span>
+                                    <span style="background: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fas fa-university" style="color: #3b82f6;"></i> PSE
+                                    </span>
+                                    <span style="background: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fab fa-cc-visa" style="color: #1a1f71;"></i> Visa
+                                    </span>
+                                    <span style="background: white; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 6px;">
+                                        <i class="fab fa-cc-mastercard" style="color: #eb001b;"></i> Mastercard
+                                    </span>
+                                </div>
+
+                                @if(config('wompi.mode') === 'sandbox')
                                 <div style="background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; margin-bottom: 20px; font-size: 12px; color: #92400e;">
-                                    <i class="fas fa-flask"></i> Modo sandbox: usa <strong>{{ config('nequi.sandbox.phone') }}</strong> como número de prueba.
+                                    <i class="fas fa-flask"></i> Sandbox: usa tarjeta <strong>4242 4242 4242 4242</strong>, cvv <strong>123</strong>, fecha futura.
                                 </div>
                                 @endif
 
-                                <div style="margin-bottom: 16px;">
-                                    <label style="font-size: 13px; font-weight: 700; color: #374151; display: block; margin-bottom: 6px;">
-                                        <i class="fas fa-phone"></i> Tu número Nequi
-                                    </label>
-                                    <input type="text" name="nequi_phone" id="nequi-phone-input"
-                                           placeholder="Ej: 3001234567"
-                                           style="width: 100%; padding: 14px 16px; border: 1.5px solid #e2e8f0; border-radius: 12px; font-size: 16px; font-weight: 600; letter-spacing: 1px; outline: none; transition: border-color 0.2s;"
-                                           onfocus="this.style.borderColor='#6c5ce7'"
-                                           onblur="this.style.borderColor='#e2e8f0'">
-                                    <p style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Sin espacios ni guiones</p>
-                                </div>
-
                                 <div style="display: flex; align-items: center; gap: 8px; padding: 12px; background: #f0fdf4; border-radius: 10px; font-size: 12px; color: #166534;">
                                     <i class="fas fa-shield-alt"></i>
-                                    <span>Pago seguro vía Nequi Conecta</span>
+                                    <span>Pago seguro via Wompi (Bancolombia)</span>
                                 </div>
                             </div>
+                        </div>
+
+                        {{-- Campos MercadoPago --}}
+                        <div id="mp-fields" style="display: none; margin-top: 20px;">
+                            @if(config('mercadopago.public_key'))
+                            <div style="padding: 20px; background: #f8fafc; border-radius: 16px; text-align: center;">
+                                <p style="font-size: 14px; color: var(--text-light); font-weight: 600; margin-bottom: 12px;">Al hacer clic en "Pagar", seras redirigido a MercadoPago</p>
+                                <div style="display: flex; justify-content: center; gap: 12px; margin-bottom: 16px;">
+                                    <span style="background: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0;"><i class="fab fa-cc-visa"></i> Visa</span>
+                                    <span style="background: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0;"><i class="fab fa-cc-mastercard"></i> Mastercard</span>
+                                    <span style="background: white; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: 600; border: 1px solid #e2e8f0;"><i class="fas fa-university"></i> PSE</span>
+                                </div>
+                                <div id="wallet_container"></div>
+                            </div>
+                            @else
+                            <div style="padding: 20px; background: #fffbeb; border-radius: 16px;">
+                                <p style="font-size: 13px; font-weight: 600; color: #92400e;">
+                                    <i class="fas fa-info-circle"></i> MercadoPago no configurado. Usa Wompi.
+                                </p>
+                            </div>
+                            @endif
                         </div>
 
                         {{-- Campos Manual --}}
@@ -192,7 +189,7 @@
                                     <i class="fas fa-file-invoice" style="font-size: 24px; color: #3eb489;"></i>
                                 </div>
                                 <h4 style="font-size: 16px; font-weight: 800; margin-bottom: 8px;">Sube tu comprobante de pago</h4>
-                                <p style="font-size: 13px; color: var(--text-light); font-weight: 500; margin-bottom: 16px;">Realiza la transferencia por <strong>${{ number_format($precio) }} COP</strong> a la cuenta que te indicará el administrador y sube el comprobante.</p>
+                                <p style="font-size: 13px; color: var(--text-light); font-weight: 500; margin-bottom: 16px;">Realiza la transferencia por <strong>${{ number_format($precio) }} COP</strong> y sube el comprobante.</p>
                                 <input type="file" name="comprobante" accept="image/*,.pdf" style="width: 100%; padding: 14px; border: 1.5px solid #e2e8f0; border-radius: 12px; background: white; font-size: 14px;">
                             </div>
                         </div>
@@ -212,16 +209,10 @@
 @if(config('mercadopago.public_key'))
 <script src="https://sdk.mercadopago.com/js/v2"></script>
 <script>
-    const mp = new MercadoPago('{{ config('mercadopago.public_key') }}', {
-        locale: 'es-CO'
-    });
+    const mp = new MercadoPago('{{ config('mercadopago.public_key') }}', { locale: 'es-CO' });
     mp.bricks().create('wallet', 'wallet_container', {
-        initialization: {
-            preferenceId: '{{ $preferenceId ?? '' }}',
-        },
-        customization: {
-            texts: { value: 'Pagar con MercadoPago' }
-        }
+        initialization: { preferenceId: '{{ $preferenceId ?? '' }}' },
+        customization: { texts: { value: 'Pagar con MercadoPago' } }
     });
 </script>
 @endif
@@ -230,14 +221,14 @@ function selectMetodo(metodo) {
     document.querySelectorAll('.metodo-card').forEach(c => c.classList.remove('selected'));
     document.querySelector('.metodo-card[data-metodo="' + metodo + '"]').classList.add('selected');
     document.getElementById('selected-metodo').value = metodo;
+    document.getElementById('wompi-fields').style.display = metodo === 'wompi' ? 'block' : 'none';
     document.getElementById('mp-fields').style.display = metodo === 'mercadopago' ? 'block' : 'none';
-    document.getElementById('nequi-fields').style.display = metodo === 'nequi' ? 'block' : 'none';
     document.getElementById('manual-fields').style.display = metodo === 'manual' ? 'block' : 'none';
     var btn = document.querySelector('.btn-premium');
-    if (metodo === 'nequi') {
-        btn.innerHTML = '<i class="fas fa-mobile-alt"></i> Pagar ${{ number_format($precio) }} COP con Nequi';
+    if (metodo === 'wompi') {
+        btn.innerHTML = '<i class="fas fa-credit-card"></i> Pagar ${{ number_format($precio) }} COP con Wompi';
     } else if (metodo === 'mercadopago') {
-        btn.innerHTML = '<i class="fas fa-lock"></i> Pagar ${{ number_format($precio) }} COP';
+        btn.innerHTML = '<i class="fas fa-lock"></i> Pagar ${{ number_format($precio) }} COP con MercadoPago';
     } else {
         btn.innerHTML = '<i class="fas fa-upload"></i> Enviar solicitud de pago';
     }
